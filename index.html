@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>총무 업무 환경 분석 AI 학습 및 퀴즈 웹앱</title>
+    <style>
+        :root {
+            --primary-color: #1e3a8a;
+            --secondary-color: #2563eb;
+            --accent-color: #3b82f6;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+            --correct-color: #16a34a;
+            --incorrect-color: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            letter-spacing: -1px; /* 전체 UI 글자 자간 -1px 설정 */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        /* API Key Container */
+        .api-key-box {
+            background: #fff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .api-key-box label {
+            font-weight: bold;
+            color: var(--primary-color);
+            white-space: nowrap;
+        }
+
+        .api-key-box input {
+            flex: 1;
+            min-width: 250px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .api-key-box button {
+            padding: 10px 18px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .api-key-box button:hover {
+            background-color: var(--primary-color);
+        }
+
+        .api-status {
+            font-size: 0.85rem;
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        /* Tab Menu */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background-color: #cbd5e1;
+            color: #334155;
+            font-size: 1.05rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Summary Section */
+        .summary-card {
+            background: var(--card-bg);
+            padding: 22px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-left: 5px solid var(--secondary-color);
+        }
+
+        .summary-card h2 {
+            color: var(--primary-color);
+            margin-bottom: 12px;
+            font-size: 1.3rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .summary-card ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+
+        .summary-card li {
+            margin-bottom: 8px;
+        }
+
+        .highlight {
+            background-color: #fef08a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        /* Quiz Action Bar */
+        .quiz-action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .ai-gen-btn {
+            padding: 10px 16px;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ai-gen-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Quiz Section */
+        .quiz-card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .quiz-card h3 {
+            font-size: 1.15rem;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .option-btn {
+            text-align: left;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: #f8fafc;
+            cursor: pointer;
+            font-size: 0.98rem;
+            transition: background 0.2s;
+        }
+
+        .option-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .option-btn.selected {
+            background-color: #dbeafe;
+            border-color: var(--secondary-color);
+        }
+
+        .option-btn.correct {
+            background-color: #dcfce7 !important;
+            border-color: var(--correct-color) !important;
+            color: #14532d;
+            font-weight: bold;
+        }
+
+        .option-btn.incorrect {
+            background-color: #fee2e2 !important;
+            border-color: var(--incorrect-color) !important;
+            color: #7f1d1d;
+        }
+
+        .explanation {
+            display: none;
+            margin-top: 15px;
+            padding: 12px;
+            background-color: #f1f5f9;
+            border-radius: 6px;
+            font-size: 0.93rem;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .action-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.15rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #submitBtn {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        #submitBtn:hover {
+            background: var(--primary-color);
+        }
+
+        #retryBtn {
+            background: #475569;
+            color: white;
+            display: none;
+        }
+
+        #retryBtn:hover {
+            background: #334155;
+        }
+
+        .score-box {
+            display: none;
+            text-align: center;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 2px solid var(--accent-color);
+        }
+
+        .score-box h2 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--secondary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>총무 업무, 전략을 만나다</h1>
+        <p>Google AI Studio (Gemini API 자동 버전 최적화) 학습 및 자동 퀴즈 웹앱</p>
+    </header>
+
+    <!-- Google AI API Key 입력 영역 -->
+    <div class="api-key-box">
+        <label for="apiKeyInput">🔑 Google AI API Key:</label>
+        <input type="password" id="apiKeyInput" placeholder="AI Studio에서 발급받은 API 키를 입력하세요 (AIzaSy...)">
+        <button type="button" onclick="saveApiKey()">저장하기</button>
+        <div id="apiStatus" class="api-status"></div>
+    </div>
+
+    <!-- 탭 메뉴 -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('summary')">📖 핵심 내용 요약</button>
+        <button class="tab-btn" onclick="switchTab('quiz')">✍️ 예상문제 (10문항)</button>
+    </div>
+
+    <!-- 1. 요약 섹션 -->
+    <div id="summary" class="tab-content active">
+        <div class="summary-card">
+            <h2>1. 기업 전략 체계와 총무의 위상</h2>
+            <ul>
+                <li><strong>사명 (Mission):</strong> 기업이 존재하는 근본적 이유[cite: 2].</li>
+                <li><strong>비전 (Vision):</strong> 기업이 열망하는 미래의 모습[cite: 2].</li>
+                <li><strong>전략 방향 & 중장기 사업전략:</strong> 비전 달성을 위한 거시적 경로 및 구체적 방법[cite: 2].</li>
+                <li><strong>조직 내 전략 흐름:</strong> <span class="highlight">전사 전략 → 사업부 전략 → 부서 전략</span> 순으로 상의하달형 흐름을 가짐[cite: 3]. 총무 부서는 전사 비전을 지원하는 실체적 구체화 단계에 위치[cite: 3].</li>
+            </ul>
+        </div>
+
+        <div class="summary-card">
+            <h2>2. 전략 수립의 기초: 내/외부 환경 분석</h2>
+            <ul>
+                <li><strong>외부 환경 분석 (External Analysis):</strong>[cite: 4]
+                    <ul>
+                        <li>거시 환경 (PEST): 정치, 경제, 사회, 문화[cite: 4]</li>
+                        <li>산업 환경: 시장, 경쟁, 기술, 법률[cite: 4]</li>
+                    </ul>
+                </li>
+                <li><strong>내부 환경 분석 (Internal Analysis):</strong> 사업/재무 성과, 고객 가치, 인적 자원(조직문화/업무스타일), 물적 자원(설비/시설)[cite: 4, 9].</li>
+                <li><strong>SWOT 연계:</strong> 환경 분석을 통해 강점(S), 약점(W), 기회(O), 위협(T)을 도출하여 실행 계획 수립[cite: 6].</li>
+            </ul>
+        </div>
+
+        <div class="summary-card">
+            <h2>3. 총무 부서의 역할과 주요 기능</h2>
+            <ul>
+                <li>총무 업무는 단순 지원을 넘어 <span class="highlight">조직의 핵심 파트너이자 멀티플레이어</span> 역할을 수행[cite: 1, 8].</li>
+                <li><strong>6대 핵심 업무 영역:</strong> 자산 관리, 사무 환경, 문서 관리, 의전 및 행사, 보안 업무, 복리후생[cite: 8].</li>
+                <li>업무 영역이 광범위하므로 <span class="highlight">명확한 전략적 우선순위 설정</span>이 필수적임[cite: 8].</li>
+            </ul>
+        </div>
+
+        <div class="summary-card">
+            <h2>4. 총무 업무 환경 분석 4단계 접근법</h2>
+            <ul>
+                <li><strong>01단계 (이슈 확인):</strong> 전사 및 사업부의 핵심 이슈 파악[cite: 10].</li>
+                <li><strong>02단계 (기능 연결):</strong> 파악된 이슈를 총무 업무 기능(예: 보안, 자산관리 등)과 매칭[cite: 10, 11].</li>
+                <li><strong>03단계 (분석 요인 도출):</strong> 구체적 내/외부 영향 요인 도출 (예: 인적 자원 스타일, 정보보호법 등)[cite: 10, 12].</li>
+                <li><strong>04단계 (자료 수집 및 분석):</strong> 관련 내부(조직진단, 간담회 회의록) 및 외부(법률 자료, 판례) 자료 수집[cite: 10, 13].</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 2. 퀴즈 섹션 -->
+    <div id="quiz" class="tab-content">
+        <div class="quiz-action-bar">
+            <span>💡 저장된 API 키를 사용하여 새로운 퀴즈 세트를 자동 생성할 수 있습니다.</span>
+            <button type="button" class="ai-gen-btn" onclick="generateQuizWithAI()">
+                ✨ AI로 새로운 10문제 생성
+            </button>
+        </div>
+
+        <div id="loadingSpinner" class="loading-spinner">
+            <div class="spinner"></div>
+            <p id="loadingText">Gemini AI 모델 버전 최적화 중 및 문제 생성 중...</p>
+        </div>
+
+        <div id="scoreBox" class="score-box">
+            <h2>결과: <span id="score">0</span> / 10점</h2>
+            <p id="scoreMessage"></p>
+        </div>
+
+        <form id="quizForm">
+            <div id="quizContainer"></div>
+            <button type="button" class="action-btn" id="submitBtn" onclick="checkAnswers()">정답 제출 및 채점하기</button>
+            <button type="button" class="action-btn" id="retryBtn" onclick="resetQuiz()">🔄 다시 풀기</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // 기본 교안 퀴즈 데이터 (10문항)
+    const defaultQuizData = [
+        {
+            question: "1. 기업의 '사명(Mission)'에 대한 설명으로 가장 올바른 것은?",
+            options: [
+                "기업이 존재하는 근본적인 이유이다.",
+                "기업이 5년 내 달성하고자 하는 구체적 목표이다.",
+                "부서 전략을 실행하기 위한 구체적인 이행 항목이다.",
+                "경쟁사 대비 생산 설비 현황을 의미한다."
+            ],
+            answer: 0,
+            explanation: "사명(Mission)은 '기업이 존재하는 근본적인 이유'를 의미합니다[cite: 2]."
+        },
+        {
+            question: "2. 조직 내 전략 체계의 흐름(위에서 아래로)을 올바르게 나열한 것은?",
+            options: [
+                "부서 전략 → 사업부 전략 → 전사 전략",
+                "전사 전략 → 사업부 전략 → 부서 전략",
+                "사업부 전략 → 부서 전략 → 전사 전략",
+                "전사 전략 → 부서 전략 → 사업부 전략"
+            ],
+            answer: 1,
+            explanation: "전략은 최상위 '전사 전략'에서 '사업부 전략'을 거쳐 기능 부서의 '부서 전략'으로 하향식(Top-down)으로 흐릅니다[cite: 3]."
+        },
+        {
+            question: "3. 외부 환경 분석 요소 중 '거시 환경(Macro Environment)' 분석 항목에 해당하지 않는 것은?",
+            options: [
+                "정치(Political)",
+                "경제(Economic)",
+                "사회·문화(Social/Cultural)",
+                "생산 설비 현황(Physical Resource)"
+            ],
+            answer: 3,
+            explanation: "생산 설비 및 업무 시설 현황은 외부 환경이 아닌 '내부 환경 분석' 중 물적 자원에 해당합니다[cite: 4, 9]."
+        },
+        {
+            question: "4. 다음 중 총무 부서의 주요 업무 영역 6가지에 해당하지 않는 것은?",
+            options: [
+                "자산 관리 및 사무 환경",
+                "문서 관리 및 보안 업무",
+                "의전·행사 및 복리후생",
+                "R&D 원천 기술 개발"
+            ],
+            answer: 3,
+            explanation: "R&D 원천 기술 개발은 연구소 등의 역할이며, 총무의 6대 기능은 자산관리, 사무환경, 문서관리, 의전/행사, 보안, 복리후생입니다[cite: 2, 8]."
+        },
+        {
+            question: "5. 총무 업무 환경 분석 4단계 프로세스의 첫 번째 단계(01)는 무엇인가?",
+            options: [
+                "총무 업무 기능과 연결",
+                "관련 자료 수집 및 분석",
+                "전사/사업부 이슈 확인",
+                "핵심 분석 요인 도출"
+            ],
+            answer: 2,
+            explanation: "4단계 프로세스는 [01. 전사/사업부 이슈 확인] → [02. 총무 업무 기능과 연결] → [03. 핵심 분석 요인 도출] → [04. 관련 자료 수집 및 분석] 순서로 진행됩니다[cite: 10]."
+        },
+        {
+            question: "6. 전사 핵심 과제인 'Process 정착으로 효율화 제고'라는 이슈를 총무 부서의 업무 기능과 연결할 때 가장 적절한 기능은?",
+            options: [
+                "의전 및 행사 업무",
+                "보안 업무 (보안 및 리스크 관리)",
+                "식당 및 복리후생 운영",
+                "경조사 지원"
+            ],
+            answer: 1,
+            explanation: "교안 사례 연구에 따르면, 정보 자원 관리 및 프로세스 효율화 이슈는 총무 부서의 '보안 업무(보안·리스크 관리)' 기능으로 구체화됩니다[cite: 11]."
+        },
+        {
+            question: "7. 총무 환경 분석 시 '외부 요인(External Factor)' 분석에 필요한 자료로 가장 적합한 것은?",
+            options: [
+                "작년도 조직 진단 보고서",
+                "작년도 직원 간담회 회의록",
+                "법제처 법률 자료 및 판례",
+                "사내 자산 관리 대장"
+            ],
+            answer: 2,
+            explanation: "법제처 법률 자료, 관련 소송 사례 및 판례는 법적 위험을 분석하기 위한 '외부 자료'에 해당합니다[cite: 13]."
+        },
+        {
+            question: "8. 교안에서 강조하는 '전략적 총무 전문가를 위한 실행 체크리스트'의 내용으로 옳지 않은 것은?",
+            options: [
+                "분석 활동에 매몰되지 않도록 범위를 명확히 정의한다.",
+                "상위 전략과 연계 없이 독립적으로 총무 단독 목표만 수립한다.",
+                "단순 확인을 넘어 업무 방향성에 대한 시사점을 도출한다.",
+                "필요한 자료의 원천을 평상시에 파악해 둔다."
+            ],
+            answer: 1,
+            explanation: "총무 부서는 항상 경영 전략이라는 큰 틀에서 상위 사업 부문 전략 및 타 부문 전략과 연계하여 목표를 수립해야 합니다[cite: 14]."
+        },
+        {
+            question: "9. 내부 환경 분석 요소 중 '인적 자원'을 분석할 때 도출할 수 있는 구체적 분석 요인은?",
+            options: [
+                "정보 보호법 관련 규제",
+                "직원들의 업무 스타일 및 조직 문화",
+                "원자재 가격 상승률",
+                "세계 경제 성장률"
+            ],
+            answer: 1,
+            explanation: "직원들의 업무 스타일, 조직 문화, 직원 만족도 등은 내부 환경 요인 중 '인적 자원' 분석 항목에 속합니다[cite: 9, 12]."
+        },
+        {
+            question: "10. 본 사업계획 교안이 내리는 총무 부서의 최종적 재정의로 가장 적절한 것은?",
+            options: [
+                "단순한 소모품 지급 전담 부서",
+                "단순 지원 부서를 넘어 조직의 미래를 설계하는 '전략의 설계자'",
+                "경영진의 지시만 수동적으로 이행하는 전달 기관",
+                "외부 환경 변화와 무관하게 고정 업무만 수행하는 부서"
+            ],
+            answer: 1,
+            explanation: "환경 분석과 전략적 사고를 통해 총무 업무는 단순 '관리'에서 조직의 미래를 설계하는 '기획(전략의 설계자)'으로 격상됩니다[cite: 15]."
+        }
+    ];
+
+    let currentQuizData = [...defaultQuizData];
+    let userAnswers = {};
+
+    // 1. API 키 저장 및 로드
+    function loadApiKey() {
+        const savedKey = localStorage.getItem("gemini_api_key");
+        const statusEl = document.getElementById("apiStatus");
+        if (savedKey) {
+            document.getElementById("apiKeyInput").value = savedKey;
+            statusEl.innerText = "✅ API 키가 브라우저에 저장되어 있습니다.";
+            statusEl.style.color = "green";
+        } else {
+            statusEl.innerText = "⚠️ API 키가 없습니다. AI 문제 생성을 위해 키를 입력 후 저장하세요.";
+            statusEl.style.color = "#d97706";
+        }
+    }
+
+    function saveApiKey() {
+        const keyInput = document.getElementById("apiKeyInput").value.trim();
+        const statusEl = document.getElementById("apiStatus");
+        if (keyInput) {
+            localStorage.setItem("gemini_api_key", keyInput);
+            statusEl.innerText = "✅ API 키가 성공적으로 저장되었습니다.";
+            statusEl.style.color = "green";
+        } else {
+            localStorage.removeItem("gemini_api_key");
+            statusEl.innerText = "❌ API 키가 삭제되었습니다.";
+            statusEl.style.color = "red";
+        }
+    }
+
+    // 2. 탭 전환
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    // 3. 퀴즈 화면 출력
+    function renderQuiz(data = currentQuizData) {
+        const container = document.getElementById('quizContainer');
+        userAnswers = {};
+        document.getElementById('scoreBox').style.display = 'none';
+        
+        document.getElementById('submitBtn').style.display = 'block';
+        document.getElementById('retryBtn').style.display = 'none';
+
+        container.innerHTML = data.map((q, qIndex) => `
+            <div class="quiz-card" id="q${qIndex}">
+                <h3>${q.question}</h3>
+                <div class="options">
+                    ${q.options.map((opt, oIndex) => `
+                        <button type="button" class="option-btn" onclick="selectOption(${qIndex},${oIndex})">
+                            ${oIndex + 1})${opt}
+                        </button>
+                    `).join('')}
+                </div>
+                <div class="explanation" id="exp${qIndex}">
+                    💡 <strong>해설:</strong> ${q.explanation}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // 보기 선택 처리
+    function selectOption(qIndex, oIndex) {
+        userAnswers[qIndex] = oIndex;
+        const quizCard = document.getElementById(`q${qIndex}`);
+        const buttons = quizCard.querySelectorAll('.option-btn');
+        
+        buttons.forEach((btn, idx) => {
+            if (idx === oIndex) {
+                btn.classList.add('selected');
+            } else {
+                btn.classList.remove('selected');
+            }
+        });
+    }
+
+    // 채점
+    function checkAnswers() {
+        let score = 0;
+        
+        currentQuizData.forEach((q, qIndex) => {
+            const quizCard = document.getElementById(`q${qIndex}`);
+            const buttons = quizCard.querySelectorAll('.option-btn');
+            const exp = document.getElementById(`exp${qIndex}`);
+            const selectedOpt = userAnswers[qIndex];
+
+            exp.style.display = 'block';
+
+            buttons.forEach((btn, oIndex) => {
+                btn.disabled = true;
+                btn.classList.remove('selected');
+
+                if (oIndex === q.answer) {
+                    btn.classList.add('correct');
+                }
+                if (selectedOpt === oIndex && selectedOpt !== q.answer) {
+                    btn.classList.add('incorrect');
+                }
+            });
+
+            if (selectedOpt === q.answer) {
+                score++;
+            }
+        });
+
+        const scoreBox = document.getElementById('scoreBox');
+        const scoreEl = document.getElementById('score');
+        const msgEl = document.getElementById('scoreMessage');
+        
+        scoreBox.style.display = 'block';
+        scoreEl.innerText = score;
+
+        if (score === 10) {
+            msgEl.innerText = "🎉 완벽합니다! 총무 전략 전문가이시네요!";
+        } else if (score >= 7) {
+            msgEl.innerText = "👍 우수한 성적입니다! 틀린 문제를 해설과 함께 확인해보세요.";
+        } else {
+            msgEl.innerText = "✏️ 복습이 필요합니다. 요약 탭을 다시 읽어보세요!";
+        }
+
+        document.getElementById('submitBtn').style.display = 'none';
+        document.getElementById('retryBtn').style.display = 'block';
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // 4. 다시 풀기 기능
+    function resetQuiz() {
+        renderQuiz(currentQuizData);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // 5. Gemini API 버전 자동 폴백(최적화) 및 문제 생성 함수
+    async function generateQuizWithAI() {
+        const apiKey = localStorage.getItem("gemini_api_key");
+        if (!apiKey) {
+            alert("Google AI API 키가 없습니다. 상단 입력창에 API 키를 입력하고 저장해 주세요.");
+            return;
+        }
+
+        const spinner = document.getElementById("loadingSpinner");
+        const loadingText = document.getElementById("loadingText");
+        const container = document.getElementById("quizContainer");
+        spinner.style.display = "block";
+        container.style.opacity = "0.3";
+
+        const promptText = `
+당신은 총무 업무 및 경영 전략 교육 전문가입니다. 
+다음 [총무 업무 환경 분석 교안 요약] 내용을 바탕으로, 학습자 검증용 객관식 4지선다 10문제를 생성하세요.
+
+[요약 내용]
+1. 기업 전략 체계: 사명(존재 이유), 비전(미래 모습), 전략 방향, 중장기 전략. 전략은 전사 전략 -> 사업부 전략 -> 부서 전략으로 하향식으로 흐름.
+2. 내/외부 환경 분석: 외부(거시-PEST, 산업-시장/경쟁/기술/법률), 내부(사업/재무성과, 고객가치, 인적자원, 물적자원).
+3. 총무 부서 기능: 자산관리, 사무환경, 문서관리, 의전/행사, 보안업무, 복리후생 (6대 기능).
+4. 환경 분석 4단계: 01.전사/사업부 이슈 확인 -> 02.총무 업무 기능과 연결 -> 03.핵심 분석 요인 도출 -> 04.관련 자료 수집 및 분석.
+
+응답은 마크다운 문법 없이 반드시 오직 JSON 배열(Array) 형식만 출력해야 합니다.
+각 요소는 다음 필드를 포함해야 합니다:
+- question: 문제 내용 (1., 2. 등의 번호 포함)
+- options: 4개의 보기 문자열 배열 [보기1, 보기2, 보기3, 보기4]
+- answer: 정답 인덱스 (0, 1, 2, 3 중 하나, 숫자)
+- explanation: 상세한 정답 해설 문자열
+`;
+
+        const candidateModels = [
+            "gemini-3.8-flash",
+            "gemini-3.7-flash",
+            "gemini-3.6-flash",
+            "gemini-3.5-flash",
+            "gemini-1.5-flash"
+        ];
+
+        let success = false;
+        let finalData = null;
+
+        for (const model of candidateModels) {
+            try {
+                loadingText.innerText = `🔄 [${model}] 모델로 연결 시도 중...`;
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                
+                const apiRes = await fetch(apiUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: promptText }] }]
+                    })
+                });
+
+                if (!apiRes.ok) {
+                    console.warn(`모델 ${model} 실패, 다음 버전 시도 중...`);
+                    continue;
+                }
+
+                const data = await apiRes.json();
+                let aiText = data.candidates[0].content.parts[0].text.trim();
+                
+                aiText = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
+                const newQuizData = JSON.parse(aiText);
+
+                if (Array.isArray(newQuizData) && newQuizData.length === 10) {
+                    finalData = newQuizData;
+                    success = true;
+                    console.log(`성공적으로 사용된 모델: ${model}`);
+                    break;
+                }
+            } catch (err) {
+                console.warn(`모델 ${model} 에러 발생:`, err);
+            }
+        }
+
+        spinner.style.display = "none";
+        container.style.opacity = "1";
+
+        if (success && finalData) {
+            currentQuizData = finalData;
+            renderQuiz(currentQuizData);
+            alert("✨ 최적화된 Gemini AI 모델을 통해 새로운 객관식 10문제가 성공적으로 생성되었습니다!");
+        } else {
+            alert("❌ 사용 가능한 모든 Gemini 모델 버전 호출에 실패했습니다. API 키 권한이나 유효성을 다시 확인해 주세요.");
+        }
+    }
+
+    // 초기 로드
+    window.onload = function() {
+        loadApiKey();
+        renderQuiz();
+    };
+</script>
+
+</body>
+</html>
